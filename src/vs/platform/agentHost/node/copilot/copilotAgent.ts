@@ -657,6 +657,7 @@ export class CopilotAgent extends Disposable implements IAgent {
 	private _closedConnectionRecovery: { readonly clientFailureId: string; readonly promise: Promise<ICopilotClosedConnectionRecoveryResult> } | undefined;
 	private readonly _reportedClientFailures = new WeakSet<Error>();
 	private readonly _authenticationSequencer = new Sequencer();
+	private _updatingGitHubCredentials = false;
 	private _githubToken: string | undefined;
 	private _serverToolHost: IAgentServerToolHost | undefined;
 
@@ -981,6 +982,10 @@ export class CopilotAgent extends Disposable implements IAgent {
 		if (!this._client) {
 			return;
 		}
+		if (this._updatingGitHubCredentials) {
+			this._logService.info(`[Copilot] Deferring CopilotClient restart (${reason}) until GitHub credential updates finish`);
+			return;
+		}
 		const busyChats = this._chatsWithActiveTurn();
 		if (busyChats > 0) {
 			this._logService.info(`[Copilot] Deferring CopilotClient restart (${reason}) until ${busyChats} in-flight turn(s) finish`);
@@ -995,7 +1000,7 @@ export class CopilotAgent extends Disposable implements IAgent {
 	 * to go idle drives this again.
 	 */
 	private async _applyPendingClientRestart(): Promise<void> {
-		if (this._pendingClientRestartReasons.size === 0 || this._shutdownPromise || !this._client || this._chatsWithActiveTurn() > 0) {
+		if (this._pendingClientRestartReasons.size === 0 || this._shutdownPromise || !this._client || this._updatingGitHubCredentials || this._chatsWithActiveTurn() > 0) {
 			return;
 		}
 		const reason = [...this._pendingClientRestartReasons].join('; ');
@@ -1367,19 +1372,25 @@ export class CopilotAgent extends Disposable implements IAgent {
 		}
 		const host = this._gitHubEndpointService.getEnterpriseUri() ?? 'https://github.com';
 		let restartRequired = false;
-		for (const session of this._allLiveSessions()) {
-			try {
-				const result = await session.updateGitHubCredentials(host, token);
-				if (!result.success) {
+		this._updatingGitHubCredentials = true;
+		try {
+			for (const session of this._allLiveSessions()) {
+				try {
+					const result = await session.updateGitHubCredentials(host, token);
+					if (!result.success) {
+						restartRequired = true;
+						this._logService.warn(`[Copilot:${session.sessionId}] GitHub credential update was rejected; scheduling a safe CopilotClient restart`);
+					} else if (result.copilotUserResolved === false) {
+						this._logService.warn(`[Copilot:${session.sessionId}] GitHub credentials were updated, but Copilot user metadata could not be resolved; plan, quota, and billing metadata may be degraded. Reauthenticate to restore it.`);
+					}
+				} catch (error) {
 					restartRequired = true;
-					this._logService.warn(`[Copilot:${session.sessionId}] GitHub credential update was rejected; scheduling a safe CopilotClient restart`);
-				} else if (result.copilotUserResolved === false) {
-					this._logService.warn(`[Copilot:${session.sessionId}] GitHub credentials were updated, but Copilot user metadata could not be resolved; plan, quota, and billing metadata may be degraded. Reauthenticate to restore it.`);
+					this._logService.warn(`[Copilot:${session.sessionId}] Failed to update GitHub credentials; scheduling a safe CopilotClient restart: ${getErrorMessage(error)}`);
 				}
-			} catch (error) {
-				restartRequired = true;
-				this._logService.warn(`[Copilot:${session.sessionId}] Failed to update GitHub credentials; scheduling a safe CopilotClient restart: ${getErrorMessage(error)}`);
 			}
+		} finally {
+			this._updatingGitHubCredentials = false;
+			await this._applyPendingClientRestart();
 		}
 		if (restartRequired) {
 			await this._requestClientRestart('GitHub credential update failed');

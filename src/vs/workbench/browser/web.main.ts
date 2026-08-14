@@ -64,6 +64,7 @@ import { IOpenerService } from '../../platform/opener/common/opener.js';
 import { mixin, safeStringify } from '../../base/common/objects.js';
 import { IndexedDB } from '../../base/browser/indexedDB.js';
 import { WebFileSystemAccess } from '../../platform/files/browser/webFileSystemAccess.js';
+import { CodeServerClient } from '../../workbench/browser/client.js';
 import { IProgressService } from '../../platform/progress/common/progress.js';
 import { DelayedLogChannel } from '../services/output/common/delayedLogChannel.js';
 import { dirname, joinPath } from '../../base/common/resources.js';
@@ -95,8 +96,7 @@ import { ISecretStorageService } from '../../platform/secrets/common/secrets.js'
 import { TunnelSource } from '../services/remote/common/tunnelModel.js';
 import { mainWindow } from '../../base/browser/window.js';
 import { INotificationService, Severity } from '../../platform/notification/common/notification.js';
-import { IDefaultAccountService } from '../../platform/defaultAccount/common/defaultAccount.js';
-import { DefaultAccountService } from '../services/accounts/browser/defaultAccount.js';
+import { DisabledDefaultAccountService, IDefaultAccountService } from '../../platform/defaultAccount/common/defaultAccount.js';
 import { AccountPolicyService, IAccountPolicyGateService } from '../services/policies/common/accountPolicyService.js';
 
 export interface IBrowserMainWorkbench {
@@ -138,6 +138,9 @@ export class BrowserMain extends Disposable {
 
 		// Startup
 		const instantiationService = workbench.startup();
+
+		const codeServerClient = this._register(instantiationService.createInstance(CodeServerClient));
+		await codeServerClient.startup();
 
 		// Window
 		this._register(instantiationService.createInstance(BrowserWindow));
@@ -363,7 +366,7 @@ export class BrowserMain extends Disposable {
 		this._register(RemoteFileSystemProviderClient.register(remoteAgentService, fileService, logService));
 
 		// Default Account
-		const defaultAccountService = this._register(new DefaultAccountService(productService));
+		const defaultAccountService = new DisabledDefaultAccountService();
 		serviceCollection.set(IDefaultAccountService, defaultAccountService);
 
 		// Policies

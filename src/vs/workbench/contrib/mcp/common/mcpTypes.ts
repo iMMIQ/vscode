@@ -27,7 +27,7 @@ import { IGalleryMcpServer, IGalleryMcpServerConfiguration, IInstallableMcpServe
 import { IMcpDevModeConfig, IMcpSandboxConfiguration, IMcpServerConfiguration } from '../../../../platform/mcp/common/mcpPlatformTypes.js';
 import { StorageScope } from '../../../../platform/storage/common/storage.js';
 import { IWorkspaceFolder, IWorkspaceFolderData } from '../../../../platform/workspace/common/workspace.js';
-import { IWorkbenchLocalMcpServer, IWorkbencMcpServerInstallOptions, WORKSPACE_FOLDER_CONFIG_ID_PREFIX } from '../../../services/mcp/common/mcpWorkbenchManagementService.js';
+import type { IWorkbenchLocalMcpServer, IWorkbencMcpServerInstallOptions } from '../../../services/mcp/common/mcpWorkbenchManagementService.js';
 import { ContributionEnablementState, IEnablementModel } from '../../chat/common/enablement.js';
 import { ToolProgress } from '../../chat/common/tools/languageModelToolsService.js';
 import { IMcpServerSamplingConfiguration } from './mcpConfiguration.js';
@@ -161,7 +161,7 @@ export namespace McpCollectionDefinition {
 	 * shared `mcp.config.` prefix plus the workspace-folder config id).
 	 */
 	export function isVscodeMcpJson(collection: McpCollectionDefinition): boolean {
-		return collection.id.startsWith(`${MCP_CONFIGURATION_COLLECTION_ID_PREFIX}${WORKSPACE_FOLDER_CONFIG_ID_PREFIX}`);
+		return collection.id.startsWith(`${MCP_CONFIGURATION_COLLECTION_ID_PREFIX}ws`);
 	}
 
 	/**

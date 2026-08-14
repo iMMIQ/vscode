@@ -7,6 +7,8 @@ import { ICopilotTokenInfo, IDefaultAccount, IDefaultAccountAuthenticationProvid
 import { Event } from '../../../base/common/event.js';
 import { createDecorator } from '../../instantiation/common/instantiation.js';
 
+export const DEFAULT_ACCOUNT_SIGN_IN_COMMAND = 'workbench.actions.accounts.signIn';
+
 /**
  * Well-known GitHub URL paths used with {@link IDefaultAccountService.resolveGitHubUrl}.
  */
@@ -85,4 +87,45 @@ export interface IDefaultAccountService {
 	 * @param path The path portion of the URL (e.g. `settings/copilot/features`).
 	 */
 	resolveGitHubUrl(path: string): string;
+}
+
+/** Default account support is intentionally unavailable in the DSH web profile. */
+export class DisabledDefaultAccountService implements IDefaultAccountService {
+	declare readonly _serviceBrand: undefined;
+
+	readonly onDidChangeDefaultAccount = Event.None;
+	readonly onDidChangePolicyData = Event.None;
+	readonly onDidChangeCopilotTokenInfo = Event.None;
+	readonly policyData = null;
+	readonly currentDefaultAccount = null;
+	readonly copilotTokenInfo = null;
+	readonly managedSettingsFetchStatus = null;
+	readonly managedSettingsFetchedAt = null;
+	readonly managedSettingsRawResponse = null;
+
+	getDefaultAccount(): Promise<null> {
+		return Promise.resolve(null);
+	}
+
+	getDefaultAccountAuthenticationProvider(): IDefaultAccountAuthenticationProvider {
+		return { id: 'github', name: 'GitHub', enterprise: false };
+	}
+
+	setDefaultAccountProvider(_provider: IDefaultAccountProvider): void { }
+
+	refresh(_options?: { forceRefresh?: boolean }): Promise<null> {
+		return Promise.resolve(null);
+	}
+
+	signIn(_options?: { additionalScopes?: readonly string[];[key: string]: unknown }): Promise<null> {
+		return Promise.resolve(null);
+	}
+
+	signOut(): Promise<void> {
+		return Promise.resolve();
+	}
+
+	resolveGitHubUrl(path: string): string {
+		return `https://github.com/${path}`;
+	}
 }

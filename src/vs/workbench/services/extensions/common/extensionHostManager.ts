@@ -258,7 +258,6 @@ export class ExtensionHostManager extends Disposable implements IExtensionHostMa
 		this._rpcProtocol = new RPCProtocol(protocol, logger);
 		this._register(this._rpcProtocol.onDidChangeResponsiveState((responsiveState: ResponsiveState) => this._onDidChangeResponsiveState.fire(responsiveState)));
 		let extensionHostProxy: IExtensionHostProxy | null = null as IExtensionHostProxy | null;
-		let mainProxyIdentifiers: ProxyIdentifier<any>[] = [];
 		const extHostContext: IInternalExtHostContext = {
 			remoteAuthority: this._extensionHost.remoteAuthority,
 			extensionHostKind: this.kind,
@@ -273,9 +272,7 @@ export class ExtensionHostManager extends Disposable implements IExtensionHostMa
 			_setExtensionHostProxy: (value: IExtensionHostProxy): void => {
 				extensionHostProxy = value;
 			},
-			_setAllMainProxyIdentifiers: (value: ProxyIdentifier<any>[]): void => {
-				mainProxyIdentifiers = value;
-			},
+			_setAllMainProxyIdentifiers: (_value: ProxyIdentifier<any>[]): void => { },
 			//#endregion
 		};
 
@@ -309,9 +306,6 @@ export class ExtensionHostManager extends Disposable implements IExtensionHostMa
 		if (!extensionHostProxy) {
 			throw new Error(`Missing IExtensionHostProxy!`);
 		}
-
-		// Check that no named customers are missing
-		this._rpcProtocol.assertRegistered(mainProxyIdentifiers);
 
 		return extensionHostProxy;
 	}

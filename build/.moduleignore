@@ -173,6 +173,12 @@ prebuild-install/**/*
 
 # other node modules
 
+# DSH profile: AI runtimes are not part of the remote server.
+@github/copilot/**
+@github/copilot-*/**
+@microsoft/mxc-sdk/**
+@vscode/copilot-api/**
+
 **/docs/**
 **/example/**
 **/examples/**

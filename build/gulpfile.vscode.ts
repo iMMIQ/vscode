@@ -26,7 +26,7 @@ import { config } from './lib/electron.ts';
 import { createAsar } from './lib/asar.ts';
 import minimist from 'minimist';
 import { compileBuildWithoutManglingTask, compileBuildWithManglingTask } from './gulpfile.compile.ts';
-import { compileNonNativeExtensionsBuildTask, compileNativeExtensionsBuildTask, compileAllExtensionsBuildTask, compileExtensionMediaBuildTask, cleanExtensionsBuildTask, compileCopilotExtensionBuildTask } from './gulpfile.extensions.ts';
+import { compileNonNativeExtensionsBuildTask, compileNativeExtensionsBuildTask, compileAllExtensionsBuildTask, compileExtensionMediaBuildTask, cleanExtensionsBuildTask, compileCopilotExtensionBuildTask, compileWebExtensionsTask } from './gulpfile.extensions.ts';
 import { copyCodiconsTask } from './lib/compilation.ts';
 import { ensureCopilotPlatformPackage, getCopilotExcludeFilter, getCopilotRuntimePrebuildFiles, getCopilotTgrepExcludeFilter, getMxcExcludeFilter, getRipgrepExcludeFilter, prepareBuiltInCopilotRipgrepShim } from './lib/copilot.ts';
 import { ensureOSProxyResolverPlatformPackage, getOSProxyResolverExcludeFilter, getOSProxyResolverPlatformFiles } from './lib/osProxyResolver.ts';
@@ -204,6 +204,34 @@ task.task(task.define('core-ci', task.series(
 		task.define('esbuild-vscode-reh-min', () => runEsbuildBundle('out-vscode-reh-min', true, true, 'server', `${sourceMappingURLBase}/core`)),
 		task.define('esbuild-vscode-reh-web-min', () => runEsbuildBundle('out-vscode-reh-web-min', true, true, 'server-web', `${sourceMappingURLBase}/core`)),
 	)
+)));
+
+// DSH ships only the browser workbench and remote server. Avoid building the
+// Electron desktop and non-web REH bundles, which are not included in code-server.
+task.task(task.define('core-reh-web-ci', task.series(
+	copyCodiconsTask,
+	cleanExtensionsBuildTask,
+	compileWebExtensionsTask,
+	compileNonNativeExtensionsBuildTask,
+	compileExtensionMediaBuildTask,
+	util.rimraf('.build/extensions/prompt-basics'),
+	util.rimraf('.build/extensions/mermaid-markdown-features/chat-webview-out'),
+	writeISODate('out-build'),
+	task.define('dsh-tsgo-typecheck', () => spawnTsgo(path.join(root, 'src', 'tsconfig.json'), { taskName: 'dsh-tsgo-typecheck', noEmit: true })),
+	task.define('dsh-esbuild-out-build', () => runEsbuildTranspile('out-build', false)),
+	task.define('dsh-esbuild-vscode-reh-web-min', () => runEsbuildBundle('out-vscode-reh-web-min', true, true, 'server-web', `${sourceMappingURLBase}/core`)),
+)));
+
+// Local iteration can reuse an existing .build/extensions tree. Release builds
+// continue to use core-reh-web-ci so extension source changes cannot go stale.
+task.task(task.define('core-reh-web-incremental-ci', task.series(
+	copyCodiconsTask,
+	util.rimraf('.build/extensions/prompt-basics'),
+	util.rimraf('.build/extensions/mermaid-markdown-features/chat-webview-out'),
+	writeISODate('out-build'),
+	task.define('dsh-incremental-tsgo-typecheck', () => spawnTsgo(path.join(root, 'src', 'tsconfig.json'), { taskName: 'dsh-incremental-tsgo-typecheck', noEmit: true })),
+	task.define('dsh-incremental-esbuild-out-build', () => runEsbuildTranspile('out-build', false)),
+	task.define('dsh-incremental-esbuild-vscode-reh-web-min', () => runEsbuildBundle('out-vscode-reh-web-min', true, true, 'server-web', `${sourceMappingURLBase}/core`)),
 )));
 
 /**

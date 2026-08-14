@@ -136,8 +136,6 @@ const serverEntryPoints = [
 	'vs/workbench/api/node/extensionHostProcess',
 	'vs/platform/files/node/watcher/watcherMain',
 	'vs/platform/terminal/node/ptyHostMain',
-	'vs/platform/agentHost/node/agentHostMain',
-	'vs/platform/agentHost/node/diffWorkerMain',
 ];
 
 // Bootstrap files per target
@@ -247,8 +245,6 @@ const commonResourcePatterns = [
 	// SVGs referenced from CSS (needed for transpile/dev builds where CSS is copied as-is)
 	'vs/workbench/browser/media/code-icon.svg',
 	'vs/workbench/browser/parts/editor/media/letterpress*.svg',
-	'vs/workbench/contrib/chat/browser/widget/media/chatPet/*.{gif,png}',
-	'vs/sessions/contrib/chat/browser/media/*.svg',
 	'vs/sessions/contrib/welcome/browser/media/themePreviews/*.svg'
 ];
 
@@ -284,7 +280,6 @@ const desktopResourcePatterns = [
 
 	// Media - audio
 	'vs/platform/accessibilitySignal/browser/media/*.mp3',
-	'vs/workbench/contrib/agentsVoice/browser/media/*.mp3',
 
 	// Media - images
 	'vs/workbench/contrib/welcomeGettingStarted/common/media/**/*.svg',
@@ -345,7 +340,6 @@ const serverWebResourcePatterns = [
 
 	// Media - audio
 	'vs/platform/accessibilitySignal/browser/media/*.mp3',
-	'vs/workbench/contrib/agentsVoice/browser/media/*.mp3',
 
 	// Media - images
 	'vs/workbench/contrib/welcomeGettingStarted/common/media/**/*.svg',
@@ -373,7 +367,6 @@ const webResourcePatterns = [
 
 	// Media - audio
 	'vs/platform/accessibilitySignal/browser/media/*.mp3',
-	'vs/workbench/contrib/agentsVoice/browser/media/*.mp3',
 
 	// Media - images
 	'vs/workbench/contrib/welcomeGettingStarted/common/media/**/*.svg',
@@ -635,6 +628,42 @@ function cssExternalPlugin(): esbuild.Plugin {
 	};
 }
 
+function dshAiTreeShakingPlugin(): esbuild.Plugin {
+	return {
+		name: 'dsh-ai-tree-shaking',
+		setup(build) {
+			build.onResolve({ filter: /\/(?:chat|inlineChat|mcp|agentsVoice|welcomeAgentSessions|agentHost)\// }, async args => {
+				if (args.pluginData?.dshAiTreeShaking) {
+					return;
+				}
+
+				const result = await build.resolve(args.path, {
+					kind: args.kind,
+					resolveDir: args.resolveDir,
+					importer: args.importer,
+					namespace: args.namespace,
+					pluginData: { dshAiTreeShaking: true },
+				});
+				return { ...result, sideEffects: false };
+			});
+		},
+	};
+}
+
+function assertDshAiActorsExcluded(metafile: esbuild.Metafile | undefined): void {
+	if (!metafile) {
+		throw new Error('DSH AI actor assertion requires an esbuild metafile');
+	}
+
+	const aiActorPattern = /\/vs\/workbench\/api\/(?:browser|common)\/(?:mainThread|extHost)(?:Ai|Chat|Embeddings|LanguageModel|Mcp)[^/]*\.ts$/;
+	const found = Object.keys(metafile.inputs)
+		.map(input => input.replaceAll('\\', '/'))
+		.filter(input => aiActorPattern.test(input));
+	if (found.length > 0) {
+		throw new Error(`DSH profile contains AI extension actors:\n${found.join('\n')}`);
+	}
+}
+
 /**
  * esbuild plugin that transforms source files to inject build-time configuration.
  * This runs during onLoad so the transformation happens before esbuild processes the content,
@@ -836,7 +865,10 @@ ${tslib}`,
 		const outPath = path.join(REPO_ROOT, outDir, `${entryPoint}.js`);
 
 		// Use CSS external plugin for entry points that don't need bundled CSS
-		const plugins: esbuild.Plugin[] = bundleCssEntryPoints.has(entryPoint) ? [] : [cssExternalPlugin()];
+		const plugins: esbuild.Plugin[] = [dshAiTreeShakingPlugin()];
+		if (!bundleCssEntryPoints.has(entryPoint)) {
+			plugins.push(cssExternalPlugin());
+		}
 		// Add content mapper plugin to inject product config and builtin extensions
 		plugins.push(contentMapperPlugin);
 		if (doNls) {
@@ -879,11 +911,13 @@ ${tslib}`,
 			logLevel: 'warning',
 			logOverride: {
 				'unsupported-require-call': 'silent',
-			},
-			tsconfigRaw,
-		};
+				},
+				tsconfigRaw,
+				metafile: true,
+			};
 
-		const result = await esbuild.build(buildOptions);
+			const result = await esbuild.build(buildOptions);
+			assertDshAiActorsExcluded(result.metafile);
 
 		buildResults.push({ outPath, result });
 	}));
@@ -898,7 +932,7 @@ ${tslib}`,
 
 		const outPath = path.join(REPO_ROOT, outDir, `${entry}.js`);
 
-		const bootstrapPlugins: esbuild.Plugin[] = [inlineMinimistPlugin(), contentMapperPlugin];
+		const bootstrapPlugins: esbuild.Plugin[] = [dshAiTreeShakingPlugin(), inlineMinimistPlugin(), contentMapperPlugin];
 		if (doNls) {
 			bootstrapPlugins.unshift(nlsPlugin({
 				baseDir: path.join(REPO_ROOT, SRC_DIR),
@@ -924,9 +958,11 @@ ${tslib}`,
 			logLevel: 'warning',
 			logOverride: {
 				'unsupported-require-call': 'silent',
-			},
-			tsconfigRaw,
-		});
+				},
+				tsconfigRaw,
+				metafile: true,
+			});
+			assertDshAiActorsExcluded(result.metafile);
 
 		buildResults.push({ outPath, result });
 	}

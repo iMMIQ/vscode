@@ -49,6 +49,20 @@ else if (globalThis._VSCODE_PRODUCT_JSON && globalThis._VSCODE_PACKAGE_JSON) {
 			version: pkg.version
 		});
 	}
+
+	// code-server: default the extension gallery to open-vsx unless an
+	// EXTENSIONS_GALLERY env override is set. The code-server telemetry
+	// endpoint default is intentionally not restored (DSH profile).
+	Object.assign(product, {
+		extensionsGallery: env.EXTENSIONS_GALLERY ? JSON.parse(env.EXTENSIONS_GALLERY) : (product.extensionsGallery || {
+			serviceUrl: "https://open-vsx.org/vscode/gallery",
+			itemUrl: "https://open-vsx.org/vscode/item",
+			extensionUrlTemplate: "https://open-vsx.org/vscode/gallery/{publisher}/{name}/latest",
+			resourceUrlTemplate: "https://open-vsx.org/vscode/asset/{publisher}/{name}/{version}/Microsoft.VisualStudio.Code.WebResources/{path}",
+			controlUrl: "",
+			recommendationsUrl: "",
+		}),
+	});
 }
 
 // Web environment or unknown

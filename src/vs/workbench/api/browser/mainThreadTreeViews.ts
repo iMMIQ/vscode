@@ -19,7 +19,7 @@ import { Mimes } from '../../../base/common/mime.js';
 import { URI } from '../../../base/common/uri.js';
 import { VSBuffer } from '../../../base/common/buffer.js';
 import { DataTransferFileCache } from '../common/shared/dataTransferCache.js';
-import { DataTransfer } from '../common/extHostTypeConverters.js';
+import * as typeConvert from '../common/extHostTypeConverters.js';
 import { IMarkdownString } from '../../../base/common/htmlContent.js';
 import { IViewsService } from '../../services/views/common/viewsService.js';
 import { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';
@@ -245,7 +245,7 @@ class TreeViewDragAndDropController implements ITreeViewDragAndDropController {
 		operationUuid?: string, sourceTreeId?: string, sourceTreeItemHandles?: string[]): Promise<void> {
 		const request = this.dataTransfersCache.add(dataTransfer);
 		try {
-			const dataTransferDto = await DataTransfer.fromList(dataTransfer);
+			const dataTransferDto = await typeConvert.DataTransfer.fromList(dataTransfer);
 			if (token.isCancellationRequested) {
 				return;
 			}

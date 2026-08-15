@@ -148,7 +148,7 @@ suite('extHostTypeConverters', function () {
 			assert.ok(binaryReference instanceof ChatReferenceBinaryData);
 
 			assert.deepStrictEqual({
-				references: references.map(reference => ({
+				references: references.map((reference: { id: string; name: string; value: unknown }) => ({
 					id: reference.id,
 					name: reference.name,
 					value: typeof reference.value === 'string'

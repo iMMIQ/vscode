@@ -1140,7 +1140,7 @@ export class ExtHostChatAgents2 extends Disposable implements ExtHostChatAgentsS
 				if (v.kind === 'tool') {
 					toolReferences.push(typeConvert.ChatLanguageModelToolReference.to(v));
 				} else if (v.kind === 'toolset') {
-					toolReferences.push(...v.value.map(typeConvert.ChatLanguageModelToolReference.to));
+					toolReferences.push(...v.value.map(value => typeConvert.ChatLanguageModelToolReference.to(value)));
 				} else {
 					varsWithoutTools.push(...typeConvert.ChatPromptReference.toReferences(v, this.getDiagnosticsWhenEnabled(extension), this._logService));
 				}

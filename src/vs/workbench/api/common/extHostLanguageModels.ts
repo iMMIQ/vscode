@@ -208,7 +208,7 @@ export class ExtHostLanguageModels implements ExtHostLanguageModelsShape {
 				} else if (typeof m.isDefault === 'object') {
 					for (const key of Object.keys(m.isDefault)) {
 						const enumKey = parseInt(key) as extHostTypes.ChatLocation;
-						isDefaultForLocation[typeConvert.ChatLocation.from(enumKey)] = m.isDefault[enumKey];
+						isDefaultForLocation[typeConvert.ChatLocation.from(enumKey) as ChatAgentLocation] = m.isDefault[enumKey];
 					}
 				}
 			}

@@ -102,7 +102,6 @@ export class TestExtensionEnablementService extends ExtensionEnablementService {
 			workspaceTrustManagementService,
 			new class extends mock<IWorkspaceTrustRequestService>() { override requestWorkspaceTrust(options?: WorkspaceTrustRequestOptions): Promise<boolean> { return Promise.resolve(true); } },
 			instantiationService.get(IExtensionManifestPropertiesService) || instantiationService.stub(IExtensionManifestPropertiesService, disposables.add(new ExtensionManifestPropertiesService(TestProductService, instantiationService.get(IConfigurationService), new TestWorkspaceTrustEnablementService(), new NullLogService()))),
-			chatEntitlementService ?? new TestChatEntitlementService(),
 			instantiationService,
 			new NullLogService(),
 			productService

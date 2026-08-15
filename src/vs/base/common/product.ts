@@ -97,17 +97,6 @@ export interface IDictationRuntimeProductConfig {
 }
 
 export interface IProductConfiguration {
-	readonly codeServerVersion?: string
-	readonly rootEndpoint?: string
-	readonly updateEndpoint?: string
-	readonly logoutEndpoint?: string
-	readonly proxyEndpointTemplate?: string
-	readonly serviceWorker?: {
-		readonly path: string;
-		readonly scope: string;
-	}
-	readonly telemetryEndpoint?: string
-
 	readonly version: string;
 	readonly date?: string;
 	readonly quality?: string;
@@ -159,7 +148,6 @@ export interface IProductConfiguration {
 		readonly resourceUrlTemplate: string;
 		readonly nlsBaseUrl: string;
 		readonly accessSKUs?: string[];
-		readonly authorizationHeaderToken?: string;
 	};
 
 	readonly agentSdks?: { readonly [packageId: string]: IAgentSdkProductConfig };

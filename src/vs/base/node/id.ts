@@ -8,7 +8,6 @@ import { TernarySearchTree } from '../common/ternarySearchTree.js';
 import * as uuid from '../common/uuid.js';
 import { getMac } from './macAddress.js';
 import { isWindows } from '../common/platform.js';
-import { stripUTF8BOM } from '../common/strings.js';
 
 // http://www.techrepublic.com/blog/data-center/mac-address-scorecard-for-common-virtual-machine-platforms/
 // VMware ESX 3, Server, Workstation, Player	00-50-56, 00-0C-29, 00-05-69
@@ -116,13 +115,8 @@ export async function getSqmMachineId(errorLogger: (error: Error) => void): Prom
 	return '';
 }
 
-export async function getDevDeviceId(errorLogger: (error: Error) => void): Promise<string> {
-	try {
-		const deviceIdPackage = await import('@vscode/deviceid');
-		const id = await deviceIdPackage.getDeviceId();
-		return stripUTF8BOM(id);
-	} catch (err) {
-		errorLogger(err);
-		return uuid.generateUuid();
-	}
+export async function getDevDeviceId(_errorLogger: (error: Error) => void): Promise<string> {
+	// DSH profile: @vscode/deviceid is not shipped and telemetry that consumes
+	// the dev device id is disabled, so fall back to a random id.
+	return uuid.generateUuid();
 }

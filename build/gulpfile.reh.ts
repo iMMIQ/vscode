@@ -343,15 +343,10 @@ function packageTask(type: string, platform: string, arch: string, sourceFolderN
 	const destination = path.join(BUILD_ROOT, destinationFolderName);
 
 	return () => {
-		const jsFilterMain = util.filter(data => !data.isDirectory() && /\.js$/.test(data.path));
-
 		const src = gulp.src(sourceFolderName + '/**', { base: '.' })
 			.pipe(rename(function (path) { path.dirname = path.dirname!.replace(new RegExp('^' + sourceFolderName), 'out'); }))
 			.pipe(util.setExecutableBit(['**/*.sh']))
-			.pipe(filter(['**', '!**/*.{js,css}.map']))
-			.pipe(jsFilterMain)
-			.pipe(util.stripSourceMappingURL())
-			.pipe(jsFilterMain.restore);
+			.pipe(filter(['**', '!**/*.{js,css}.map']));
 
 		const workspaceExtensionPoints = ['debuggers', 'jsonValidation'];
 		const isUIExtension = (manifest: { extensionKind?: string; main?: string; contributes?: Record<string, unknown> }) => {

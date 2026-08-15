@@ -11,16 +11,13 @@ import { AccessibilityHelpNLS } from '../../../../editor/common/standaloneString
 import { ICommandService } from '../../../../platform/commands/common/commands.js';
 import { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
-import { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';
 import { AccessibilityHelpAction } from './accessibleViewActions.js';
-import { ChatContextKeys } from '../../chat/common/actions/chatContextKeys.js';
 import { HasSpeechProvider } from '../../speech/common/speechService.js';
 import { CommentAccessibilityHelpNLS } from '../../comments/browser/commentsAccessibility.js';
 import { CommentContextKeys } from '../../comments/common/commentContextKeys.js';
 import { NEW_UNTITLED_FILE_COMMAND_ID } from '../../files/browser/fileConstants.js';
 import { IAccessibleViewService, IAccessibleViewContentProvider, AccessibleViewProviderId, IAccessibleViewOptions, AccessibleViewType } from '../../../../platform/accessibility/browser/accessibleView.js';
 import { AccessibilityVerbositySettingId } from './accessibilityConfiguration.js';
-import { ctxHasEditorModification, ctxHasRequestInProgress } from '../../chat/browser/chatEditing/chatEditingEditorContextKeys.js';
 import { IAccessibilityService } from '../../../../platform/accessibility/common/accessibility.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 
@@ -52,7 +49,6 @@ class EditorAccessibilityHelpProvider extends Disposable implements IAccessibleV
 	verbositySettingKey = AccessibilityVerbositySettingId.Editor;
 	constructor(
 		private readonly _editor: ICodeEditor,
-		@IKeybindingService private readonly _keybindingService: IKeybindingService,
 		@IContextKeyService private readonly _contextKeyService: IContextKeyService,
 		@IAccessibilityService private readonly accessibilityService: IAccessibilityService,
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
@@ -84,23 +80,13 @@ class EditorAccessibilityHelpProvider extends Disposable implements IAccessibleV
 		}
 		content.push(AccessibilityHelpNLS.toolbar);
 
-		const chatEditInfo = getChatEditInfo(this._keybindingService, this._contextKeyService, this._editor);
-		if (chatEditInfo) {
-			content.push(chatEditInfo);
-		}
-
 		content.push(AccessibilityHelpNLS.listSignalSounds);
 		content.push(AccessibilityHelpNLS.listAlerts);
 		content.push(AccessibilityHelpNLS.announceCursorPosition);
 		content.push(AccessibilityHelpNLS.focusNotifications);
 
 
-		const chatCommandInfo = getChatCommandInfo(this._keybindingService, this._contextKeyService);
-		if (chatCommandInfo) {
-			content.push(chatCommandInfo);
-		}
-
-		const commentCommandInfo = getCommentCommandInfo(this._keybindingService, this._contextKeyService, this._editor);
+		const commentCommandInfo = getCommentCommandInfo(this._contextKeyService, this._editor);
 		if (commentCommandInfo) {
 			content.push(commentCommandInfo);
 		}
@@ -137,7 +123,7 @@ class EditorAccessibilityHelpProvider extends Disposable implements IAccessibleV
 	}
 }
 
-export function getCommentCommandInfo(keybindingService: IKeybindingService, contextKeyService: IContextKeyService, editor: ICodeEditor): string | undefined {
+export function getCommentCommandInfo(contextKeyService: IContextKeyService, editor: ICodeEditor): string | undefined {
 	const editorContext = contextKeyService.getContext(editor.getDomNode()!);
 	if (editorContext.getValue<boolean>(CommentContextKeys.activeEditorHasCommentingRange.key)) {
 		return [CommentAccessibilityHelpNLS.intro, CommentAccessibilityHelpNLS.addComment, CommentAccessibilityHelpNLS.nextCommentThread, CommentAccessibilityHelpNLS.previousCommentThread, CommentAccessibilityHelpNLS.nextRange, CommentAccessibilityHelpNLS.previousRange].join('\n');
@@ -145,26 +131,8 @@ export function getCommentCommandInfo(keybindingService: IKeybindingService, con
 	return;
 }
 
-export function getChatCommandInfo(keybindingService: IKeybindingService, contextKeyService: IContextKeyService): string | undefined {
-	if (ChatContextKeys.enabled.getValue(contextKeyService)) {
-		return [AccessibilityHelpNLS.quickChat, AccessibilityHelpNLS.startInlineChat].join('\n');
-	}
-	return;
-}
-
-export function getChatEditInfo(keybindingService: IKeybindingService, contextKeyService: IContextKeyService, editor: ICodeEditor): string | undefined {
-	const editorContext = contextKeyService.getContext(editor.getDomNode()!);
-	if (editorContext.getValue<boolean>(ctxHasEditorModification.key)) {
-		return AccessibilityHelpNLS.chatEditorModification + '\n' + AccessibilityHelpNLS.chatEditActions;
-	} else if (editorContext.getValue<boolean>(ctxHasRequestInProgress.key)) {
-		return AccessibilityHelpNLS.chatEditorRequestInProgress;
-	}
-	return;
-}
-
 export function getDictationInfo(contextKeyService: IContextKeyService): string | undefined {
-	if (HasSpeechProvider.getValue(contextKeyService) ||
-		(ChatContextKeys.enabled.getValue(contextKeyService) && ChatContextKeys.speechToTextConfigured.getValue(contextKeyService))) {
+	if (HasSpeechProvider.getValue(contextKeyService)) {
 		return AccessibilityHelpNLS.editorDictation;
 	}
 	return;

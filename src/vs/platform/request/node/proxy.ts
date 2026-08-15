@@ -42,7 +42,6 @@ export async function getProxyAgent(rawRequestURL: string, env: typeof process.e
 		port: (proxyEndpoint.port ? +proxyEndpoint.port : 0) || (proxyEndpoint.protocol === 'https' ? 443 : 80),
 		auth: proxyEndpoint.auth,
 		rejectUnauthorized: isBoolean(options.strictSSL) ? options.strictSSL : true,
-		keepAlive: true,
 	};
 
 	if (requestURL.protocol === 'http:') {

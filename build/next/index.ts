@@ -632,7 +632,7 @@ function dshAiTreeShakingPlugin(): esbuild.Plugin {
 	return {
 		name: 'dsh-ai-tree-shaking',
 		setup(build) {
-			build.onResolve({ filter: /\/(?:chat|inlineChat|mcp|agentsVoice|welcomeAgentSessions|agentHost)\// }, async args => {
+			build.onResolve({ filter: /\/(?:agentsVoice|welcomeAgentSessions)\// }, async args => {
 				if (args.pluginData?.dshAiTreeShaking) {
 					return;
 				}
@@ -655,7 +655,7 @@ function assertDshAiActorsExcluded(metafile: esbuild.Metafile | undefined): void
 		throw new Error('DSH AI actor assertion requires an esbuild metafile');
 	}
 
-	const aiActorPattern = /\/vs\/workbench\/api\/(?:browser|common)\/(?:mainThread|extHost)(?:Ai|Chat|Embeddings|LanguageModel|Mcp)[^/]*\.ts$/;
+	const aiActorPattern = /\/vs\/workbench\/api\/(?:browser|common)\/(?:mainThread|extHost)(?:Ai|Embeddings)[^/]*\.ts$/;
 	const found = Object.keys(metafile.inputs)
 		.map(input => input.replaceAll('\\', '/'))
 		.filter(input => aiActorPattern.test(input));

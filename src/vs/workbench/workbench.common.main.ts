@@ -201,6 +201,31 @@ import './contrib/performance/browser/performance.contribution.js';
 // Notebook
 import './contrib/notebook/browser/notebook.contribution.js';
 
+// DSH chat experiment: restore the AI service layer chat depends on
+import '../platform/mcp/common/mcpResourceScannerService.js';
+import './services/authentication/browser/authenticationMcpUsageService.js';
+import './services/authentication/browser/authenticationMcpAccessService.js';
+import './services/authentication/browser/authenticationMcpService.js';
+import './services/chat/common/chatEntitlementService.js';
+import './services/agentHost/common/agentHostResourceService.js';
+import '../platform/agentHost/browser/agentHostConnectionsService.js';
+import { IAllowedMcpServersService, IMcpGalleryService } from '../platform/mcp/common/mcpManagement.js';
+import { McpGalleryService } from '../platform/mcp/common/mcpGalleryService.js';
+import { AllowedMcpServersService } from '../platform/mcp/common/allowedMcpServersService.js';
+import './services/accounts/browser/defaultAccount.js';
+import './services/policies/browser/accountPolicyGate.contribution.js';
+registerSingleton(IMcpGalleryService, McpGalleryService, InstantiationType.Delayed);
+registerSingleton(IAllowedMcpServersService, AllowedMcpServersService, InstantiationType.Delayed);
+import './contrib/chat/browser/chat.shared.contribution.js';
+import './contrib/chat/browser/chat.contribution.js';
+import './contrib/chat/browser/chat.view.contribution.js';
+import './contrib/inlineChat/browser/inlineChat.contribution.js';
+import './contrib/editTelemetry/browser/editTelemetry.contribution.js';
+import './contrib/mcp/browser/mcp.contribution.js';
+import './contrib/mcp/browser/mcp.view.contribution.js';
+import './contrib/chat/browser/chatSessions/chatSessions.contribution.js';
+import './contrib/chat/browser/contextContrib/chatContext.contribution.js';
+
 // Speech
 import './contrib/speech/browser/speech.contribution.js';
 

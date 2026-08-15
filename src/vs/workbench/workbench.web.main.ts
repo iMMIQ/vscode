@@ -73,6 +73,22 @@ import './services/power/browser/powerService.js';
 import './services/localTranscription/browser/localTranscriptionService.js';
 
 import { InstantiationType, registerSingleton } from '../platform/instantiation/common/extensions.js';
+
+// DSH chat experiment: web-side AI service registrations chat depends on
+import './services/mcp/browser/mcpWorkbenchManagementService.js';
+import '../platform/sandbox/browser/sandboxHelperService.js';
+import { IMcpGalleryManifestService } from '../platform/mcp/common/mcpGalleryManifest.js';
+import { WorkbenchMcpGalleryManifestService } from './services/mcp/browser/mcpGalleryManifestService.js';
+import { IAgentHostService } from '../platform/agentHost/common/agentService.js';
+import { EditorRemoteAgentHostServiceClient } from './services/agentHost/browser/editorRemoteAgentHostServiceClient.js';
+import { IRemoteAgentHostService, NullRemoteAgentHostService } from '../platform/agentHost/common/remoteAgentHostService.js';
+import { BrowserAgentHostDebugLogsExportService, IAgentHostDebugLogsExportService } from './contrib/chat/browser/actions/exportAgentHostDebugLogsAction.js';
+import './services/agentHost/browser/webAgentHostEnablementService.js';
+registerSingleton(IMcpGalleryManifestService, WorkbenchMcpGalleryManifestService, InstantiationType.Delayed);
+registerSingleton(IAgentHostService, EditorRemoteAgentHostServiceClient, InstantiationType.Delayed);
+registerSingleton(IRemoteAgentHostService, NullRemoteAgentHostService, InstantiationType.Delayed);
+registerSingleton(IAgentHostDebugLogsExportService, BrowserAgentHostDebugLogsExportService, InstantiationType.Delayed);
+
 import { IAccessibilityService } from '../platform/accessibility/common/accessibility.js';
 import { IContextMenuService } from '../platform/contextview/browser/contextView.js';
 import { ContextMenuService } from '../platform/contextview/browser/contextMenuService.js';

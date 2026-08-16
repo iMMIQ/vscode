@@ -240,7 +240,10 @@ export class InlineChatController implements IEditorContribution {
 						if (!isResponseVM(item)) {
 							return false;
 						}
-						return !!item.model.isPendingConfirmation.get();
+						// DSH: render plain-text replies in the zone too. The
+						// upstream gate (only pending-confirmation responses)
+						// leaves ask-mode turns silent after submit.
+						return true;
 					},
 					menus: {
 						telemetrySource: 'inlineChatWidget',

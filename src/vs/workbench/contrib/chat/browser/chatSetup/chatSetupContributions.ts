@@ -15,12 +15,10 @@ import { equalsIgnoreCase } from '../../../../../base/common/strings.js';
 import { ThemeIcon } from '../../../../../base/common/themables.js';
 import { URI } from '../../../../../base/common/uri.js';
 import { ServicesAccessor } from '../../../../../editor/browser/editorExtensions.js';
-import { ICodeEditorService } from '../../../../../editor/browser/services/codeEditorService.js';
-import { EditorContextKeys } from '../../../../../editor/common/editorContextKeys.js';
 import { localize, localize2 } from '../../../../../nls.js';
 import { IActionViewItemService } from '../../../../../platform/actions/browser/actionViewItemService.js';
-import { Action2, MenuId, MenuRegistry, registerAction2 } from '../../../../../platform/actions/common/actions.js';
-import { CommandsRegistry, ICommandService } from '../../../../../platform/commands/common/commands.js';
+import { Action2, MenuId, registerAction2 } from '../../../../../platform/actions/common/actions.js';
+import { ICommandService } from '../../../../../platform/commands/common/commands.js';
 import { ConfigurationTarget, IConfigurationService } from '../../../../../platform/configuration/common/configuration.js';
 import { ContextKeyExpr, IContextKeyService } from '../../../../../platform/contextkey/common/contextkey.js';
 import { IsWebContext } from '../../../../../platform/contextkey/common/contextkeys.js';
@@ -29,7 +27,6 @@ import { IEnvironmentService } from '../../../../../platform/environment/common/
 import { ExtensionIdentifier } from '../../../../../platform/extensions/common/extensions.js';
 import { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';
 import { ILogService } from '../../../../../platform/log/common/log.js';
-import { IMarkerService } from '../../../../../platform/markers/common/markers.js';
 import { IOpenerService } from '../../../../../platform/opener/common/opener.js';
 import product from '../../../../../platform/product/common/product.js';
 import { GitHubPaths, IDefaultAccountService } from '../../../../../platform/defaultAccount/common/defaultAccount.js';
@@ -59,7 +56,7 @@ import { chatViewsWelcomeRegistry } from '../viewsWelcome/chatViewsWelcome.js';
 import { buildUpgradeUrlWithRedirect, ChatSetupAnonymous, ChatSetupStrategy, IChatSetupCommandOptions, IChatSetupResult, refreshTokens } from './chatSetup.js';
 import { ChatSetupController } from './chatSetupController.js';
 import { GrowthSessionController, registerGrowthSession } from './chatSetupGrowthSession.js';
-import { AICodeActionsHelper, AINewSymbolNamesProvider, ChatCodeActionsProvider, SetupAgent } from './chatSetupProviders.js';
+import { AINewSymbolNamesProvider, ChatCodeActionsProvider, SetupAgent } from './chatSetupProviders.js';
 import { ChatSetup } from './chatSetupRunner.js';
 
 const defaultChat = {
@@ -571,87 +568,9 @@ export class ChatSetupContribution extends Disposable implements IWorkbenchContr
 
 		//#endregion
 
-		//#region Editor Context Menu
-
-		function registerGenerateCodeCommand(coreCommand: 'chat.internal.explain' | 'chat.internal.fix' | 'chat.internal.review', actualCommand: string): void {
-
-			CommandsRegistry.registerCommand(coreCommand, async (accessor, ...args) => {
-				const commandService = accessor.get(ICommandService);
-				const codeEditorService = accessor.get(ICodeEditorService);
-				const markerService = accessor.get(IMarkerService);
-
-				switch (coreCommand) {
-					case 'chat.internal.explain':
-					case 'chat.internal.fix': {
-						const textEditor = codeEditorService.getActiveCodeEditor();
-						const uri = textEditor?.getModel()?.uri;
-						const range = textEditor?.getSelection();
-						if (!uri || !range) {
-							return;
-						}
-
-						const markers = AICodeActionsHelper.warningOrErrorMarkersAtRange(markerService, uri, range);
-
-						const actualCommand = coreCommand === 'chat.internal.explain'
-							? AICodeActionsHelper.explainMarkers(markers)
-							: AICodeActionsHelper.fixMarkers(markers, range);
-
-						await commandService.executeCommand(actualCommand.id, ...(actualCommand.arguments ?? []));
-
-						break;
-					}
-					case 'chat.internal.review': {
-						const result = await commandService.executeCommand(CHAT_SETUP_SUPPORT_ANONYMOUS_ACTION_ID);
-						if (result) {
-							await commandService.executeCommand(actualCommand);
-						}
-						break;
-					}
-				}
-			});
-		}
-		registerGenerateCodeCommand('chat.internal.explain', 'github.copilot.chat.explain');
-		registerGenerateCodeCommand('chat.internal.fix', 'github.copilot.chat.fix');
-		registerGenerateCodeCommand('chat.internal.review', 'github.copilot.chat.review');
-
-		const internalGenerateCodeContext = ContextKeyExpr.and(
-			ChatContextKeys.Setup.hidden.negate(),
-			ChatContextKeys.Setup.disabledInWorkspace.negate(),
-			ChatContextKeys.Setup.completed.negate(),
-		);
-
-		MenuRegistry.appendMenuItem(MenuId.EditorContext, {
-			command: {
-				id: 'chat.internal.explain',
-				title: localize('explain', "Explain"),
-			},
-			group: '1_chat',
-			order: 4,
-			when: internalGenerateCodeContext
-		});
-
-		MenuRegistry.appendMenuItem(MenuId.EditorContext, {
-			command: {
-				id: 'chat.internal.fix',
-				title: localize('fix', "Fix"),
-			},
-			group: '1_chat',
-			order: 5,
-			when: ContextKeyExpr.and(
-				internalGenerateCodeContext,
-				EditorContextKeys.readOnly.negate()
-			)
-		});
-
-		MenuRegistry.appendMenuItem(MenuId.EditorContext, {
-			command: {
-				id: 'chat.internal.review',
-				title: localize('review', "Code Review"),
-			},
-			group: '1_chat',
-			order: 6,
-			when: internalGenerateCodeContext
-		});
+		// dsh: the editor context menu is owned by the bundled DSH extension.
+		// Do not contribute the Copilot setup placeholders (Explain/Fix/Review):
+		// they either open setup or invoke absent github.copilot commands.
 
 	}
 

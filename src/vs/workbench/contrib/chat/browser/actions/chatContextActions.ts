@@ -306,20 +306,6 @@ class AttachSelectionToChatAction extends Action2 {
 			f1: true,
 			precondition: ChatContextKeys.enabled,
 			menu: [{
-				id: MenuId.EditorContext,
-				group: '1_chat',
-				order: 1,
-				when: ContextKeyExpr.and(
-					ChatContextKeys.enabled,
-					EditorContextKeys.hasNonEmptySelection,
-					ContextKeyExpr.or(
-						ResourceContextKey.Scheme.isEqualTo(Schemas.file),
-						ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeRemote),
-						ResourceContextKey.Scheme.isEqualTo(Schemas.untitled),
-						ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeUserData)
-					)
-				)
-			}, {
 				id: MenuId.InlineChatEditorAffordance,
 				group: '0_chat',
 				order: 2,
